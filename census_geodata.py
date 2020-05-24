@@ -5,6 +5,8 @@ import os
 import geopandas as gpd
 import pandas as pd
 
+from utils import mkdir_r
+
 
 def find_shapefiles(path):
     for _,_,f in os.walk(path):
@@ -29,7 +31,7 @@ def get_tiger_files(year, outpath, force_reload=False):
     print(f'Downloading shapefiles: {url}')
 
     if not os.path.exists(outpath):
-        os.mkdir(outpath)
+        mkdir_r(outpath)
 
     li = find_shapefiles(outpath)
     if not force_reload and len(li) > 0:
@@ -64,7 +66,7 @@ def get_geodata_from_shapefile(year):
     
 
     if year in [2000,2001]:
-        sf = get_tiger_files(2000, './data/2000/shapefiles')
+        sf = get_tiger_files(2000, './data/shapefiles/2000')
         gdf = gpd.read_file(sf)
         gdf = gdf.dissolve(by='CNTYIDFP00')
         gdf.reset_index(inplace=True)
@@ -74,7 +76,7 @@ def get_geodata_from_shapefile(year):
         df['INTPTLON'] = gdf.centroid.x
     
     elif year in range(2002, 2018):
-        sf = get_tiger_files(2010, './data/2010/shapefiles')
+        sf = get_tiger_files(2010, './data/shapefiles/2010')
         gdf = gpd.read_file(sf)
         gdf = gdf.dissolve(by='GEOID10')
         gdf.reset_index(inplace=True)
@@ -84,7 +86,7 @@ def get_geodata_from_shapefile(year):
         df['INTPTLON'] = gdf.centroid.x
 
     else:
-        sf = get_tiger_files(year, f'./data/{year}/shapefiles')
+        sf = get_tiger_files(year, f'./data/shapefiles/{year}')
         gdf = gpd.read_file(sf)
         gdf = gdf.dissolve(by='GEOID')
         gdf.reset_index(inplace=True)

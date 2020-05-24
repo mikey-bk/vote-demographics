@@ -1,6 +1,7 @@
 from census_utils import *
 import pandas as pd
-from census_geodata import get_geodata_from_shapefile;
+from census_geodata import get_geodata_from_shapefile
+from utils import mkdir_r
 
 
 c = get_census_object()
@@ -181,16 +182,8 @@ def generate_age_file(YEAR):
 def generate_files(years, functions):
     from itertools import product
 
-    try:
-        os.mkdir('./data')
-    except:
-        pass
-
     for year, fun in product(years, functions):
-        try:
-            os.mkdir(f'./data/{year}')
-        except:
-            pass
+        mkdir_r(f'./data/{year}')
 
         print(f'{fun.__name__}({year})...')
         fun(year)
@@ -220,7 +213,7 @@ def combine_files_into_topics(topics):
             df_2004 = pd.merge(df.xs(2000), df.xs(2008),on='FIPS', suffixes=('_2000', '_2008'))
             for col in df.columns:
                 df_2004[col] = (5 * df_2004[col + '_2000'].astype(float) + 4 * df_2004[col + '_2008'].astype(float)) / 9
-        df_2004['YEAR'] = 2004
+        df_2004.loc[: ,'YEAR'] = 2004
         df_2004 = df_2004.reset_index().set_index(['YEAR', 'FIPS'])
         df_2004 = df_2004[df.columns]
         df = pd.concat([df, df_2004])
