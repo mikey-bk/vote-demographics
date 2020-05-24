@@ -32,7 +32,7 @@ def get_tiger_files(year, outpath, force_reload=False):
         os.mkdir(outpath)
 
     li = find_shapefiles(outpath)
-    if not force_reload or len(li) > 0:
+    if not force_reload and len(li) > 0:
         return os.path.join(outpath, li[-1])
 
     urllib.request.urlretrieve(url, f'{outpath}/shapefiles.zip')
