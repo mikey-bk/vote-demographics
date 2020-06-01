@@ -4,6 +4,11 @@ from census_geodata import get_geodata_from_shapefile
 from utils import mkdir_r
 
 
+__all__=['data_root_path', 'get_data_frame', 'CensusReports', 'topics']
+
+data_root_path = './data'
+years = [2000, 2009, 2012, 2016]
+
 c = get_census_object()
 
 def generate_county_names_file(YEAR):
@@ -13,7 +18,9 @@ def generate_county_names_file(YEAR):
     df_names['County'] = df_names['NAME'].apply(lambda s: ','.join(s.split(',')[:-1]))
     df_names['State']  = df_names['NAME'].apply(lambda s: s.split(',')[-1])
 
-    df_names[df_names.columns[-2:]].to_csv(f'./data/{YEAR}/county_names.csv')
+    df_names[df_names.columns[-2:]].to_csv(f'{data_root_path}/{YEAR}/county_names.csv')
+
+
 
 def generate_county_data_file(YEAR):
     generate_county_names_file(YEAR)
@@ -23,7 +30,7 @@ def generate_county_data_file(YEAR):
     df_geodata = get_geodata_from_shapefile(YEAR)
     df_geodata.set_index('FIPS', inplace=True)
 
-    df_names.join(df_geodata).to_csv(f'./data/{YEAR}/county_data.csv')
+    df_names.join(df_geodata).to_csv(f'{data_root_path}/{YEAR}/county_data.csv')
 
 
 def generate_household_income_file(YEAR):
@@ -49,7 +56,7 @@ def generate_household_income_file(YEAR):
     df_income['INCOME_HOUSEHOLDS_BELOW_35K_PCT'] = df_income['INCOME_HOUSEHOLDS_BELOW_35K'] / df_income['INCOME_HOUSEHOLDS_ALL'] 
     df_income['INCOME_HOUSEHOLDS_ABOVE_200K_PCT'] = df_income['INCOME_HOUSEHOLDS_ABOVE_200K'] / df_income['INCOME_HOUSEHOLDS_ALL'] 
 
-    df_income[df_income.columns[-5:]].to_csv(f'./data/{YEAR}/income.csv')
+    df_income[df_income.columns[-5:]].to_csv(f'{data_root_path}/{YEAR}/income.csv')
 
 
 def generate_median_income_file(YEAR):
@@ -61,7 +68,7 @@ def generate_median_income_file(YEAR):
         df_median_income = census_get_county_equiv_data(c.acs5, ['NAME', 'B19013_001E'], YEAR)
         df_median_income.rename(columns={'B19013_001E':'HOUSEHOLD_MEDIAN_INCOME'},inplace=True)
 
-    df_median_income[['HOUSEHOLD_MEDIAN_INCOME']].to_csv(f'./data/{YEAR}/median_income.csv')
+    df_median_income[['HOUSEHOLD_MEDIAN_INCOME']].to_csv(f'{data_root_path}/{YEAR}/median_income.csv')
 
 
 def generate_population_file(YEAR):
@@ -72,7 +79,7 @@ def generate_population_file(YEAR):
         df_population = census_get_county_equiv_data(c.acs5, ['NAME', 'B01003_001E'], YEAR)
         df_population.rename(columns={'B01003_001E': 'Total Population'}, inplace = True)
 
-    df_population[['Total Population']].to_csv(f'./data/{YEAR}/population.csv')
+    df_population[['Total Population']].to_csv(f'{data_root_path}/{YEAR}/population.csv')
 
 
 def generate_education_file(YEAR):
@@ -98,7 +105,7 @@ def generate_education_file(YEAR):
     df_education['HIGH_SCHOOL_AND_HIGHER_PCT'] = df_education['HIGH_SCHOOL_AND_HIGHER']/df_education['POPULATION_25Y_AND_OVER']
     df_education['BACHELOR_AND_HIGHER_PCT'] = df_education['BACHELOR_AND_HIGHER']/df_education['POPULATION_25Y_AND_OVER']
 
-    df_education[df_education.columns[-5:]].to_csv(f'./data/{YEAR}/education.csv')
+    df_education[df_education.columns[-5:]].to_csv(f'{data_root_path}/{YEAR}/education.csv')
 
 
 def generate_race_ethnicity_file(YEAR):
@@ -132,7 +139,7 @@ def generate_race_ethnicity_file(YEAR):
     df_race_ethnicity['RACE_ASIAN_NON_HISPANIC_PCT'] = df_race_ethnicity['RACE_ASIAN_NON_HISPANIC'] / df_race_ethnicity['POP']
     df_race_ethnicity['HISPANIC_OR_LATINO_PCT'] = df_race_ethnicity['HISPANIC_OR_LATINO'] / df_race_ethnicity['POP']
 
-    df_race_ethnicity[df_race_ethnicity.columns[-10:]].to_csv(f'./data/{YEAR}/race_and_ethnicity.csv')
+    df_race_ethnicity[df_race_ethnicity.columns[-10:]].to_csv(f'{data_root_path}/{YEAR}/race_and_ethnicity.csv')
 
 
 def generate_household_types_file(YEAR):
@@ -156,7 +163,7 @@ def generate_household_types_file(YEAR):
     df_households['MARRIED_COUPLE_FAMILIES_PCT'] = df_households['MARRIED_COUPLE_FAMILIES']/df_households['NUM_HOUSEHOLDS']
     df_households['NON_FAMILY_HOUSEHOLDS_PCT'] = df_households['NON_FAMILY_HOUSEHOLDS']/df_households['NUM_HOUSEHOLDS']
         
-    df_households[df_households.columns[-5:]].to_csv(f'./data/{YEAR}/households.csv')
+    df_households[df_households.columns[-5:]].to_csv(f'{data_root_path}/{YEAR}/households.csv')
 
 
 def generate_age_file(YEAR):
@@ -176,7 +183,7 @@ def generate_age_file(YEAR):
     
     df_ages['TOTAL_POP_18+_PCT'] = df_ages['TOTAL_POP_18+'] / df_ages['POP'].astype(float)
     df_ages['TOTAL_POP_65+_PCT'] = df_ages['TOTAL_POP_65+'] / df_ages['POP'].astype(float)
-    df_ages[df_ages.columns[-4:]].to_csv(f'./data/{YEAR}/ages.csv')
+    df_ages[df_ages.columns[-4:]].to_csv(f'{data_root_path}/{YEAR}/ages.csv')
 
 
 def generate_files(years, functions):
@@ -190,7 +197,6 @@ def generate_files(years, functions):
 
 
 def combine_files_into_topics(topics):
-    years = [2016,2012,2009,2000]
     datasets = {}
     from itertools import product
 
@@ -220,22 +226,81 @@ def combine_files_into_topics(topics):
         df.to_csv(f'./data/{topic}.csv')
 
 
-
-if __name__ == '__main__':
-    years = [2000, 2009, 2012, 2016]
-    funs = [generate_county_data_file, 
+topics = dict(zip(['county_data', 'education', 'population', 'race_and_ethnicity','households', 'income', 'median_income', 'ages'], 
+            [generate_county_data_file, 
             generate_household_income_file, 
             generate_median_income_file, 
             generate_population_file, 
             generate_education_file,
             generate_race_ethnicity_file,
             generate_household_types_file,
-            generate_age_file]
+            generate_age_file]))
 
-    generate_files(years, funs)
 
-    topics = ['county_data', 'education', 'population', 'race_and_ethnicity', 'households', 'income', 'median_income', 'ages']
-    combine_files_into_topics(topics)
+def get_data_frame(topic, reload=False):
+    '''Must be one of the topics provided in the topic list.
+    '''
+    if reload or not os.path.exists(f'{data_root_path}/{topic}.csv'):
+        funs = topics[topic]
+        generate_files(years, funs)
+        combine_files_into_topics(topics)
+
+    df = pd.read_csv(f'{data_root_path}/{topic}.csv')
+    df.set_index(['YEAR','FIPS'], inplace=True)
+
+    return df
+
+
+class CensusReports:
+    def __init__(self):
+        self._dict = dict()
+    
+
+    def __getitem__(self, key):
+        if key not in self._dict:
+            self._dict[key] = get_data_frame(key)
+        
+        return self._dict[key]
+
+
+    def __iter__(self):
+        self._current = iter(topics)
+        return self
+    
+    def __next__(self):
+        return self[next(self._current)]
+
+    def get_flattened_frame(self, year=None):
+        it = iter(self)
+        df = next(it).copy()
+        try:
+            while True:
+                df = df.join(next(it))
+        except StopIteration:
+            pass
+
+        if year:
+            return df.xs(year)
+
+        return df
+
+            
+
+    
+
+    
+
+
+
+
+
+
+
+    
+
+
+    
+    
 
 
 
