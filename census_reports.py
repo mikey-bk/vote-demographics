@@ -242,12 +242,12 @@ def combine_files_into_topics(topics):
 
 topics = dict(zip(['county_data', 'education', 'population', 'race_and_ethnicity','households', 'income', 'median_income', 'ages', 'votes'], 
             [generate_county_data_file, 
-            generate_household_income_file, 
-            generate_median_income_file, 
-            generate_population_file, 
             generate_education_file,
+            generate_population_file, 
             generate_race_ethnicity_file,
             generate_household_types_file,
+            generate_household_income_file, 
+            generate_median_income_file, 
             generate_age_file, 
             None]))
 
@@ -257,8 +257,13 @@ def get_data_frame(topic, reload=False):
     '''
     if reload or not os.path.exists(f'{data_root_path}/{topic}.csv'):
         funs = topics[topic]
-        generate_files(years, funs)
-        combine_files_into_topics(topics.keys())
+        generate_files(years, [funs])
+        try:
+            combine_files_into_topics([topic])
+        except ValueError as e:
+            print(topic)
+            raise e
+
 
     df = pd.read_csv(f'{data_root_path}/{topic}.csv')
     df.set_index(['YEAR','FIPS'], inplace=True)
