@@ -2,6 +2,7 @@ from census_utils import *
 import pandas as pd
 from census_geodata import get_geodata_from_shapefile
 from utils import mkdir_r
+import us
 
 
 __all__=['data_root_path', 'get_data_frame', 'CensusReports', 'topics']
@@ -15,11 +16,14 @@ def generate_county_names_file(YEAR):
     census_object = c.sf3 if YEAR == 2000 else c.acs5
     df_names = census_get_county_equiv_data(census_object, ['NAME'], YEAR)
 
-    df_names['County'] = df_names['NAME'].apply(lambda s: ','.join(s.split(',')[:-1]))
-    df_names['State']  = df_names['NAME'].apply(lambda s: s.split(',')[-1])
+    if YEAR == 2000:
+        df_names['County'] = df_names['NAME']
+        df_names['State'] = df_names['state'].apply(lambda s: us.states.lookup(str(s)).name)
+    else:
+        df_names['County'] = df_names['NAME'].apply(lambda s: ','.join(s.split(',')[:-1]))
+        df_names['State']  = df_names['NAME'].apply(lambda s: s.split(',')[-1])
 
     df_names[df_names.columns[-2:]].to_csv(f'{data_root_path}/{YEAR}/county_names.csv')
-
 
 
 def generate_county_data_file(YEAR):
@@ -184,6 +188,11 @@ def generate_age_file(YEAR):
     df_ages['TOTAL_POP_18+_PCT'] = df_ages['TOTAL_POP_18+'] / df_ages['POP'].astype(float)
     df_ages['TOTAL_POP_65+_PCT'] = df_ages['TOTAL_POP_65+'] / df_ages['POP'].astype(float)
     df_ages[df_ages.columns[-4:]].to_csv(f'{data_root_path}/{YEAR}/ages.csv')
+
+def generate_vote_files(YEAR):
+    '''MIT Election Data and Science Lab, 2018, "County Presidential Election Returns 2000-2016", https://doi.org/10.7910/DVN/VOQCHQ, Harvard Dataverse, V6, UNF:6:ZZe1xuZ5H2l4NUiSRcRf8Q== [fileUNF]'''
+    
+    pass
 
 
 def generate_files(years, functions):
