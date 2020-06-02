@@ -1,8 +1,10 @@
-from census_utils import *
 import pandas as pd
-from census_geodata import get_geodata_from_shapefile
 from utils import mkdir_r
 import us
+
+from census_utils import *
+from census_geodata import get_geodata_from_shapefile
+from election_data import get_election_data
 
 
 __all__=['data_root_path', 'get_data_frame', 'CensusReports', 'topics']
@@ -189,16 +191,12 @@ def generate_age_file(YEAR):
     df_ages['TOTAL_POP_65+_PCT'] = df_ages['TOTAL_POP_65+'] / df_ages['POP'].astype(float)
     df_ages[df_ages.columns[-4:]].to_csv(f'{data_root_path}/{YEAR}/ages.csv')
 
-def generate_vote_files(YEAR):
-    '''MIT Election Data and Science Lab, 2018, "County Presidential Election Returns 2000-2016", https://doi.org/10.7910/DVN/VOQCHQ, Harvard Dataverse, V6, UNF:6:ZZe1xuZ5H2l4NUiSRcRf8Q== [fileUNF]'''
-    
-    pass
-
 
 def generate_files(years, functions):
     from itertools import product
 
     for year, fun in product(years, functions):
+        if not fun: continue
         mkdir_r(f'./data/{year}')
 
         print(f'{fun.__name__}({year})...')
@@ -212,6 +210,9 @@ def combine_files_into_topics(topics):
     for year, topic in product(years, topics):
         if topic not in datasets:
             datasets[topic] = []
+
+        if topic == 'votes':
+            continue
         try:
             df = pd.read_csv(f'./data/{year}/{topic}.csv')
             if year == 2009:
@@ -221,6 +222,10 @@ def combine_files_into_topics(topics):
             pass
         
     for topic, data in datasets.items():
+        if topic == 'votes':
+            df = get_election_data()
+            df.to_csv(f'./data/{topic}.csv')
+            continue
         df = pd.concat(data)
         if topic == 'county_names' or topic == 'county_data':
             df_2004 = df.xs(2008)
@@ -235,7 +240,7 @@ def combine_files_into_topics(topics):
         df.to_csv(f'./data/{topic}.csv')
 
 
-topics = dict(zip(['county_data', 'education', 'population', 'race_and_ethnicity','households', 'income', 'median_income', 'ages'], 
+topics = dict(zip(['county_data', 'education', 'population', 'race_and_ethnicity','households', 'income', 'median_income', 'ages', 'votes'], 
             [generate_county_data_file, 
             generate_household_income_file, 
             generate_median_income_file, 
@@ -243,7 +248,8 @@ topics = dict(zip(['county_data', 'education', 'population', 'race_and_ethnicity
             generate_education_file,
             generate_race_ethnicity_file,
             generate_household_types_file,
-            generate_age_file]))
+            generate_age_file, 
+            None]))
 
 
 def get_data_frame(topic, reload=False):
@@ -252,7 +258,7 @@ def get_data_frame(topic, reload=False):
     if reload or not os.path.exists(f'{data_root_path}/{topic}.csv'):
         funs = topics[topic]
         generate_files(years, funs)
-        combine_files_into_topics(topics)
+        combine_files_into_topics(topics.keys())
 
     df = pd.read_csv(f'{data_root_path}/{topic}.csv')
     df.set_index(['YEAR','FIPS'], inplace=True)
